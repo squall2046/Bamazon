@@ -13,9 +13,8 @@ Bamazon is composed with three apps.
 * Bamazon manager app
 * Bamazon supervisor app
 ```
-![concert](./scr5.png)
 
-##  ✒️ 1. **Customer View**: 
+##  ✒️ 1. **Customer App**: 
 
 1. A MySQL Database called `bamazon`.
 2. A Table inside of that database called `products`.
@@ -40,7 +39,7 @@ Bamazon is composed with three apps.
    * Once the update goes through, show the customer the total cost of their purchase.
 
  
-## ✒️ 2. **Manager View**: 
+## ✒️ 2. **Manager App**: 
 
 * A Node application called `bamazonManager.js`. Running this application will:
 
@@ -56,7 +55,7 @@ Bamazon is composed with three apps.
   * If a manager selects `Add New Product`, it will allow the manager to add a completely new product to the store.
 
 
-## ✒️ 3.  **Supervisor View**: 
+## ✒️ 3.  **Supervisor App**: 
 
 1. A MySQL table called `departments` includes the following columns:
    * department_id
@@ -80,13 +79,10 @@ Bamazon is composed with three apps.
 
 
 ![concert](./scr6.png)
-![concert](./scr7.png)
-![concert](./scr8.png)
-
 
 ## Author
 * [Isaac Wu](https://github.com/squall2046)
-* [Game Repo](https://github.com/squall2046/Constructor-Word-Guess)
+* [Game Repo](https://github.com/squall2046/Bamazon)
 
 ## Copyright
 Isaac Wu © 2019 All Rights Reserved
