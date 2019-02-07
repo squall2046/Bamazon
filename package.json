@@ -1,0 +1,29 @@
+{
+  "name": "Bamazon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bamazonCustomer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/squall2046/Bamazon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/squall2046/Bamazon/issues"
+  },
+  "homepage": "https://github.com/squall2046/Bamazon#readme",
+  "dependencies": {
+    "boxen": "^2.1.0",
+    "chalk": "^2.4.2",
+    "dotenv": "^6.2.0",
+    "figlet": "^1.2.1",
+    "inquirer": "^6.2.2",
+    "moment": "^2.24.0",
+    "mysql": "^2.16.0"
+  }
+}
