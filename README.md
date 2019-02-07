@@ -14,7 +14,7 @@ Bamazon is composed with three apps.
 * Bamazon supervisor app
 ```
 
-##  ✒️ 1. **Customer App**: 
+###  ✒️ 1. **Customer App**: 
 
 1. A MySQL Database called `bamazon`.
 2. A Table inside of that database called `products`.
@@ -39,7 +39,7 @@ Bamazon is composed with three apps.
    * Once the update goes through, show the customer the total cost of their purchase.
 
  
-## ✒️ 2. **Manager App**: 
+### ✒️ 2. **Manager App**: 
 
 * A Node application called `bamazonManager.js`. Running this application will:
 
@@ -55,7 +55,7 @@ Bamazon is composed with three apps.
   * If a manager selects `Add New Product`, it will allow the manager to add a completely new product to the store.
 
 
-## ✒️ 3.  **Supervisor App**: 
+### ✒️ 3.  **Supervisor App**: 
 
 1. A MySQL table called `departments` includes the following columns:
    * department_id
