@@ -16,6 +16,7 @@ Bamazon is composed with three apps.
 
 ###  ✒️ 1. **Customer App**: 
 
+![concert](./scr7.png)
 1. A MySQL Database called `bamazon`.
 2. A Table inside of that database called `products`.
 3. The products table have each of the following columns:
@@ -30,14 +31,16 @@ Bamazon is composed with three apps.
 5. The app will then prompt users with two messages.
    * The first message ask customers the ID of the product they would like to buy.
    * The second message ask how many units of the product they would like to buy.
+![concert](./scr8.png)
 
 6. Once the customer has placed the order, Bamazon will check if the store has enough of the product to meet the customer's request.
    * If not, the app will log a phrase like `Insufficient quantity!`, and then prevent the order from going through.
+![concert](./scr9.png)
 
 7. If the store _does_ have enough of the product, Bamazon will fulfill the customer's order.
    * This means updating the SQL database to reflect the remaining quantity.
    * Once the update goes through, show the customer the total cost of their purchase.
-
+![concert](./scr10.png)
  
 ### ✒️ 2. **Manager App**: 
 
@@ -77,8 +80,6 @@ Bamazon is composed with three apps.
 
 5. The `total_profit` column is calculated on the fly using the difference between `over_head_costs` and `product_sales`. `total_profit` won't be stored in any database.
 
-
-![concert](./scr6.png)
 
 ## Author
 * [Isaac Wu](https://github.com/squall2046)
