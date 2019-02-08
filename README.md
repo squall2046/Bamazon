@@ -2,7 +2,7 @@
 
 ## Overview
 Bamazon is an Amazon-like storefront with the MySQL database. The app will take in orders from customers and deplete stock from the store's inventory. You can program your app to track product sales across your store's departments and then provide a summary of the highest-grossing departments in the store. It is a **command line app** that takes in parameters and gives you back data. The app receive user input using the `maysql`, `inquirer`, `chalk`, `figlet` and `boxen` npm packages.
-####   :point_right: Click  **[>>>Here<<<](https://youtu.be/ZH--1385PGc)**  Check my :tv: video to see how it works.
+####   :point_right: Click  **[>>>Here<<<](https://youtu.be/dKfmwZvswCc)**  Check my :tv: video to see how it works.
 ![concert](./W8.jpg)
 
 
