@@ -128,9 +128,17 @@ function addLow() {
                     connection.query("UPDATE products SET ? WHERE ?",
                         [{ stock_quantity: upQuantity }, { item_id: upId }], function (err, update) {
                             if (err) { throw err; };
-                            table3.push([chalk.yellow(upId), res[0].product_name, res[0].department_name, chalk.cyanBright(res[0].price), chalk.magentaBright(res[0].stock_quantity)]);
-                            console.log(chalk.red("\n\n\n\n                              fill inventory\n") + table3.toString() + "\n\n\n\n");
-                            return manager();
+                            // console.log(res);
+                            console.log(chalk.cyan("\n\n    ============= RELOAD ==============\n"));
+                            console.log(chalk.yellowBright("     · tem_id: ") + upId);
+                            console.log(chalk.yellowBright("     · product_name: ") + res[0].product_name);
+                            console.log(chalk.yellowBright("     · department_name: ") + res[0].department_name);
+                            console.log(chalk.yellowBright("     · price: ") + res[0].price);
+                            console.log(chalk.yellowBright("     · stock_quantity: ") + chalk.redBright(upQuantity));
+                            console.log(chalk.cyan("\n    ==================================="));
+                            console.log(chalk.yellowBright("    ➯ The inventory products reloaded !!"));
+                            console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
+                           return manager();
                         }
                     );
                 });
@@ -182,3 +190,11 @@ function addNew() {
         }
     });
 }
+
+
+
+// 3.1 和 3.2 是 read data, 所用的 data 已经存在, 所以在 connection.query{ } 中的 function (err, res) 是可以读取 res 的.
+// 3.3 和 3.4 是 update 和 create data, 所用的 data 正在被书写和更改, 所以这些 data 尚未存在.
+// 由于 Node.js 是异步, 即每条线同时读取, 所以 读到 connection.query{ } 中的 function (err, res) 时, 这个 function是与
+// "UPDATE products SET ? WHERE ?" 以及 "INSERT INTO products SET ?" 同时进行的, 所以 res 尚不存在 data,
+// 所以暂时不能使用这些 data. 但可以通过 return, 即下一步, 来重新转到一个新的 用来 read data 的 function 来读取.
