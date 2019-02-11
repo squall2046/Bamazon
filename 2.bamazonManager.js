@@ -5,16 +5,6 @@ const chalk = require("chalk");
 const figlet = require('figlet');
 const boxen = require('boxen');
 const Table = require('cli-table3');
-// ============= 3.5a build a departments cli-table with head only =============
-let table = new Table({
-    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
-});
-let table2 = new Table({
-    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
-});
-let table3 = new Table({
-    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
-});
 
 let connection = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -72,6 +62,13 @@ function manager() {
 
 // ======= 3.1 read database (all products) =======
 function viewAll() {
+
+    // ============= 3.1a build a departments cli-table with head only =============
+    let table = new Table({
+        head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+    });
+
+    // ============= 3.1b read every departments data and push into the table =============
     connection.query("SELECT * FROM products", function (err, res) {
         if (err) { throw err };
         // console.log(res);
@@ -86,6 +83,13 @@ function viewAll() {
 
 // ======= 3.2 read database (low inventory) =======
 function viewLow() {
+
+    // ============= 3.2a build a low inventory cli-table with head only =============
+    let table2 = new Table({
+        head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+    });
+
+    // ============= 3.1b read the data which inventory quantity between 0 -- 50, and push into the table =============
     connection.query("SELECT * FROM products WHERE stock_quantity BETWEEN 0 AND 50", function (err, res) {
         if (err) { throw err };
         // console.log(res);
@@ -99,7 +103,6 @@ function viewLow() {
 }
 
 // ======= 3.3 update data in table column of database (add low inventory) =======
-// ======= 3.31 read database (low inventory) =======
 function addLow() {
     inquirer.prompt([{
         name: "id",
@@ -115,6 +118,7 @@ function addLow() {
             console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
             return addLow();
         } else {
+            // ======= 3.31 read database (low inventory) =======
             connection.query("SELECT * FROM products WHERE ?",
                 { item_id: answer.id }, function (err, res) {
                     if (err) { throw err; };
@@ -129,16 +133,8 @@ function addLow() {
                         [{ stock_quantity: upQuantity }, { item_id: upId }], function (err, update) {
                             if (err) { throw err; };
                             // console.log(res);
-                            console.log(chalk.cyan("\n\n    ============= RELOAD ==============\n"));
-                            console.log(chalk.yellowBright("     · tem_id: ") + upId);
-                            console.log(chalk.yellowBright("     · product_name: ") + res[0].product_name);
-                            console.log(chalk.yellowBright("     · department_name: ") + res[0].department_name);
-                            console.log(chalk.yellowBright("     · price: ") + res[0].price);
-                            console.log(chalk.yellowBright("     · stock_quantity: ") + chalk.redBright(upQuantity));
-                            console.log(chalk.cyan("\n    ==================================="));
-                            console.log(chalk.yellowBright("    ➯ The inventory products reloaded !!"));
-                            console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
-                           return manager();
+                            console.log(chalk.green("\n\n       ➯ Reloading Complete.\n\r"));
+                            return viewLow();
                         }
                     );
                 });
@@ -183,18 +179,9 @@ function addNew() {
                 stock_quantity: answer.quantity
             }, function (err, res) {
                 if (err) { throw err; };
-                console.log(chalk.yellowBright("\n\n       ➯ The new products have added to inventory !!"));
-                console.log(chalk.cyan("\n Return to the Menu.......\n\r\n\r\n\r\n\r"));
-                return manager();
+                console.log(chalk.green("\n\n       ➯ New Product Added.\n\r\n\r"));
+                return viewAll();
             });
         }
     });
 }
-
-
-
-// 3.1 和 3.2 是 read data, 所用的 data 已经存在, 所以在 connection.query{ } 中的 function (err, res) 是可以读取 res 的.
-// 3.3 和 3.4 是 update 和 create data, 所用的 data 正在被书写和更改, 所以这些 data 尚未存在.
-// 由于 Node.js 是异步, 即每条线同时读取, 所以 读到 connection.query{ } 中的 function (err, res) 时, 这个 function是与
-// "UPDATE products SET ? WHERE ?" 以及 "INSERT INTO products SET ?" 同时进行的, 所以 res 尚不存在 data,
-// 所以暂时不能使用这些 data. 但可以通过 return, 即下一步, 来重新转到一个新的 用来 read data 的 function 来读取.

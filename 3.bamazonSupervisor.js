@@ -26,7 +26,7 @@ figlet('Bamazon', function (err, data) {
     console.log("\r\n\r\n           ✿                        ✿              ✿\n     ✿        ✿                                       ✿"
         + boxen("\n ✿ Welcome to ✿\n" + chalk.bold.white(data + "✿ "), { backgroundColor: "green", borderColor: "green", padding: 1, margin: 1, borderStyle: 'round' })
         + "    ✿                               ✿                     ✿ \n           ✿                    ✿")
-        console.log(chalk.bold.green("\n                  - Supervisor Version -\n\r\n\r\n\r\n\r"))
+    console.log(chalk.bold.green("\n                  - Supervisor Version -\n\r\n\r\n\r\n\r"))
 
     // ============= 2.connection MySql =============
     connection.connect(function (err) {
@@ -87,6 +87,11 @@ function viewDept() {
 // ============= 3.3 View and log 'product_sales' updates of department table =============
 function viewDeptUp() {
 
+    // ============= 3.5b reset table before push data(again) =============
+    table = new Table({
+        head: ['department_id', 'department_name', 'over_head_costs', 'product_sales', 'total_profit']
+    });
+
     connection.query("SELECT department_id, department_name, over_head_costs, product_sales, SUM (product_sales - over_head_costs) as total_profit FROM departments GROUP BY department_name",
         function (err, dept) {
             if (err) { throw err; };
@@ -110,7 +115,7 @@ function viewDeptUp() {
             }
             // ============= 3.5c log the departments cli-table outside of loop =============
             console.log(chalk.red("\n\n\n\n                                  departments table\n") + table.toString() + "\n\n\n\n");
-            connection.end();
+            supervisor();
         }
     )
 }
@@ -141,7 +146,7 @@ function addDept() {
                 function (err, res) {
                     if (err) { throw error; };
                     console.log(chalk.green("\n\nNew Department has added.\n\n\n\n"))
-                    connection.end();
+                    viewDept()
                 })
         })
 }
