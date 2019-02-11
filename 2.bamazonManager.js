@@ -1,8 +1,22 @@
 require('dotenv').config();
-var mysql = require("mysql");
-var inquirer = require("inquirer");
+const mysql = require("mysql");
+const inquirer = require("inquirer");
+const chalk = require("chalk");
+const figlet = require('figlet');
+const boxen = require('boxen');
+const Table = require('cli-table3');
+// ============= 3.5a build a departments cli-table with head only =============
+let table = new Table({
+    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+});
+let table2 = new Table({
+    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+});
+let table3 = new Table({
+    head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+});
 
-var connection = mysql.createConnection({
+let connection = mysql.createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -10,68 +24,161 @@ var connection = mysql.createConnection({
     database: "bamazondb"
 });
 
-connection.connect(function (err) {
-    if (err) { throw err; }
-    console.log("connected as id: " + connection.threadId + "\n");
-    productCRUD();
+// ============= 1.Welcome =============
+figlet('Bamazon', function (err, data) {
+    if (err) { console.dir(err); return };
+    console.log("\r\n\r\n           ✿                        ✿              ✿\n     ✿        ✿                                       ✿"
+        + boxen("\n ✿ Welcome to ✿\n" + chalk.bold.white(data + "✿ "), { backgroundColor: "cyan", borderColor: "cyan", padding: 1, margin: 1, borderStyle: 'round' })
+        + "    ✿                               ✿                     ✿ \n           ✿                    ✿")
+    console.log(chalk.bold.cyan("\n                      - Manager Version -\n\r\n\r\n\r\n\r"))
+
+    // ============= 2.connection MySql =============
+    connection.connect(function (err) {
+        if (err) { throw err };
+        // console.log("connected as id: " + connection.threadId + "\n");
+        manager();
+    });
 });
 
-function productCRUD() {
+// ============= 3. Read & Update database through inquirer =============
+function manager() {
     inquirer.prompt({
-        name: "CRUD",
+        name: "manager",
         type: "list",
-        message: "Select [Create], [Update] or [Delete] an item",
-        choices: ["Create", "Update", "Delete", "Quit"]
+        message: "How may I serve you?",
+        choices: ["[View Products for Sale]", "[View Low Inventory]", "[Add to Inventory]", "[Add New Product]", "[Exit]"]
     })
-        .then(function (response) {
-            switch (response.CRUD) {
-                case "create":
-                    productCreate()
+        .then(function (answer) {
+            switch (answer.manager) {
+                case "[View Products for Sale]":
+                    viewAll()
                     break;
-                case "create":
-                    productUpdate()
+                case "[View Low Inventory]":
+                    viewLow()
                     break;
-                case "create":
-                    productDelete()
+                case "[Add to Inventory]":
+                    addLow()
                     break;
-                default:
+                case "[Add New Product]":
+                    addNew()
+                    break;
+                case "[Exit]":
                     connection.end();
+                    process.exit();
+                    break;
             }
         });
 }
 
-function productCreate() {
+// ======= 3.1 read database (all products) =======
+function viewAll() {
+    connection.query("SELECT * FROM products", function (err, res) {
+        if (err) { throw err };
+        // console.log(res);
+        for (let i = 0; i < res.length; i++) {
+            let prodArr = [chalk.yellow(res[i].item_id), res[i].product_name, res[i].department_name, chalk.cyanBright(res[i].price), chalk.magentaBright(res[i].stock_quantity)];
+            table.push(prodArr);
+        };
+        console.log(chalk.red("\n\n\n\n                              products table\n") + table.toString() + "\n\n\n\n");
+        return manager();
+    })
+}
+
+// ======= 3.2 read database (low inventory) =======
+function viewLow() {
+    connection.query("SELECT * FROM products WHERE stock_quantity BETWEEN 0 AND 50", function (err, res) {
+        if (err) { throw err };
+        // console.log(res);
+        for (let i = 0; i < res.length; i++) {
+            let lowArr = [chalk.yellow(res[i].item_id), res[i].product_name, res[i].department_name, chalk.cyanBright(res[i].price), chalk.magentaBright(res[i].stock_quantity)];
+            table2.push(lowArr);
+        };
+        console.log(chalk.red("\n\n\n\n                              Low Inventory\n") + table2.toString() + "\n\n\n\n");
+        return manager();
+    })
+}
+
+// ======= 3.3 update data in table column of database (add low inventory) =======
+// ======= 3.31 read database (low inventory) =======
+function addLow() {
     inquirer.prompt([{
         name: "id",
         type: "input",
-        message: "Enter 'item_id' "
+        message: "Enter the product ID which need to reload: "
+    }, {
+        name: "addQuantity",
+        type: "input",
+        message: "Enter the product quantity for reloading: "
+    }]).then(function (answer) {
+        if (answer.id.length < 1 || answer.addQuantity.length < 1 || parseFloat(answer.addQuantity) === NaN) {
+            console.log(chalk.yellowBright("\n\n    Invalid item ID or quantity, would you like to try again?"));
+            console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
+            return addLow();
+        } else {
+            connection.query("SELECT * FROM products WHERE ?",
+                { item_id: answer.id }, function (err, res) {
+                    if (err) { throw err; };
+                    // console.log(res);
+
+                    // ======= 3.32 update database (low inventory) =======
+                    let upId = answer.id;
+                    let upQuantity = parseFloat(answer.addQuantity) + parseFloat(res[0].stock_quantity);
+                    // console.log("tlNum: "+upQuantity);
+
+                    connection.query("UPDATE products SET ? WHERE ?",
+                        [{ stock_quantity: upQuantity }, { item_id: upId }], function (err, update) {
+                            if (err) { throw err; };
+                            table3.push([chalk.yellow(upId), res[0].product_name, res[0].department_name, chalk.cyanBright(res[0].price), chalk.magentaBright(res[0].stock_quantity)]);
+                            console.log(chalk.red("\n\n\n\n                              fill inventory\n") + table3.toString() + "\n\n\n\n");
+                            return manager();
+                        }
+                    );
+                });
+        }
+    })
+}
+
+
+// ======= 3.4 Create data in table column of database (add new item) =======
+function addNew() {
+    inquirer.prompt([{
+        name: "id",
+        type: "input",
+        message: "Enter a new 'item_id': "
     }, {
         name: "name",
         type: "input",
-        message: "Enter 'product_name' "
+        message: "Enter a new 'product_name': "
     }, {
         name: "dept",
         type: "input",
-        message: "Enter 'department_name' ",
+        message: "Enter a new 'department_name': ",
     }, {
         name: "price",
         type: "input",
-        message: "Enter 'price' "
+        message: "Enter a new 'price': "
     }, {
         name: "quantity",
         type: "input",
-        message: "Enter 'stock_quantity' "
-    }]).then(function (response) {
-        connection.query("INSERT INTO products SET ?", {
-            item_id: response.id,
-            product_name: response.name,
-            department_name: response.dept,
-            price: response.price,
-            stock_quantity: response.quantity
-        }, function (err) {
-            if (err) { throw err; }
-            console.log("A new product has post.");
-            start();
-        });
+        message: "Enter a new 'stock_quantity': "
+    }]).then(function (answer) {
+        if (answer.id.length < 1 || answer.dept.length < 1 || answer.price.length < 1 || answer.quantity.length < 1 || parseFloat(answer.price) === NaN || parseFloat(answer.quantity) === NaN) {
+            console.log(chalk.yellowBright("\n\n    Please try again. Make sure Price and Quantity are number ONLY."));
+            console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
+            return addNew();
+        } else {
+            connection.query("INSERT INTO products SET ?", {
+                item_id: answer.id,
+                product_name: answer.name,
+                department_name: answer.dept,
+                price: answer.price,
+                stock_quantity: answer.quantity
+            }, function (err, res) {
+                if (err) { throw err; };
+                console.log(chalk.yellowBright("\n\n       ➯ The new products have added to inventory !!"));
+                console.log(chalk.cyan("\n Return to the Menu.......\n\r\n\r\n\r\n\r"));
+                return manager();
+            });
+        }
     });
 }

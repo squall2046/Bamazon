@@ -1,0 +1,6 @@
+department_id,department_name,over_head_costs,product_sales,total_profit
+101,grocery,6000,NULL,NULL
+102,clothing,4000,NULL,NULL
+104,electronic,1000,NULL,NULL
+106,garden,5000,NULL,NULL
+107,hidden props,1,NULL,NULL
