@@ -142,7 +142,6 @@ function addLow() {
     })
 }
 
-
 // ======= 3.4 Create data in table column of database (add new item) =======
 function addNew() {
     inquirer.prompt([{

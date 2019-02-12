@@ -5,8 +5,9 @@ const chalk = require("chalk");
 const figlet = require('figlet');
 const boxen = require('boxen');
 const moment = require('moment');
+const Table = require('cli-table3');
 
-let totalPrice = 0;
+let tof = false;
 
 let connection = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -35,24 +36,42 @@ function customer() {
     inquirer.prompt({
         name: "customer",
         type: "list",
-        message: "How could I help you?",
-        choices: ["Shopping", "Exit"]
+        message: "How may I help you?",
+        choices: ["[Shopping]", "[Exit]"]
     })
         .then(function (answer) {
             switch (answer.customer) {
-                case "Shopping":
+                case "[Shopping]":
                     shop()
                     break;
-                case "Exit":
+                case "[Exit]":
                     connection.end();
                     process.exit();
                     break;
             }
         });
 }
+function shop() {
+    // ============= 3.1a build a departments cli-table with head only =============
+    let table = new Table({
+        head: ['item_id', 'product_name', 'department_name', 'price', 'stock_quantity']
+    });
+
+    // ============= 3.1b read every departments data and push into the table =============
+    connection.query("SELECT * FROM products", function (err, res) {
+        if (err) { throw err };
+        // console.log(res);
+        for (let i = 0; i < res.length; i++) {
+            let prodArr = [chalk.yellow(res[i].item_id), res[i].product_name, res[i].department_name, chalk.cyanBright(res[i].price), chalk.magentaBright(res[i].stock_quantity)];
+            table.push(prodArr);
+        };
+        console.log(chalk.red("\n\n\n\n                              products table\n") + table.toString() + "\n\n\n\n");
+        return purchase();
+    })
+}
 
 // ============= 3. Read & Update database through inquirer =============
-function shop() {
+function purchase() {
     inquirer.prompt([
         {
             name: "id",
@@ -64,60 +83,62 @@ function shop() {
             message: "How many would you like for shopping?"
         }
     ]).then(function (answer) {
-        // ======= 3.1 read database (customer check id) =======
-        connection.query("SELECT * FROM products WHERE ?",
-            { item_id: answer.id }, function (err, response) {
-                if (err) { throw err };
-                // console.log(response);
-                if (answer.id.length < 1 || answer.quantity.length < 1 || parseFloat(answer.quantity) === NaN) {
-                    console.log(chalk.yellowBright("\n\n    Invalid item ID or quantity, would you like to try again?"));
-                    console.log(chalk.cyan("\n Return to Menu.......\n\r\n\r\n\r\n\r"));
-                    return shop();
-                } else {
+        connection.query("SELECT * FROM products WHERE ?", { item_id: answer.id }, function (err, response) {
+            if (err) { throw err };
 
-                    console.log(boxen("✿ Product Name       " + chalk.bold.greenBright(response[0].product_name + ' (' + response[0].item_id + ')\n') +
+            // ======= 3.1 read database (customer check if ID is valid) =======
+            let idArr = [];
+            for (var k = 0; k < response.length; k++) {
+                idArr.push(response[k].item_id);
+            }
+
+            if (idArr.indexOf(parseInt(answer.id)) === -1) {
+                console.log(chalk.yellowBright("\n\n    Invalid item ID, would you like to try again?\n\n"));
+                return purchase();
+            }
+
+            // ======= 3.2 ======= read database (customer check if quantity is enough) =======
+            else if (answer.quantity.length < 1 || parseInt(response[0].stock_quantity) < parseInt(answer.quantity)) {
+                console.log(
+                    boxen("✿ Product Name       " + chalk.bold.greenBright(response[0].product_name + ' (' + response[0].item_id + ')\n') +
                         "✿ Product Price      " + chalk.bold.cyanBright('$ ' + response[0].price + "\n") +
-                        "✿ Product Quantity   " + chalk.bold.redBright(response[0].stock_quantity + " left"), { backgroundColor: "black", borderColor: "magenta", padding: 1, margin: 1, borderStyle: 'classic' }
-                    ))
+                        "✿ Product Quantity   " + chalk.bold.redBright(response[0].stock_quantity + " left"), { backgroundColor: "black", borderColor: "magenta", padding: 1, margin: 1, borderStyle: 'classic' }) +
+                    chalk.yellowBright("\n     Sorry we don't have enough in the store.\n\r\n\r\n\r\n\r")
+                )
+                return purchase();
+            }
 
-                    // 3.2 ======= read database (customer check quantity) =======
-                    if (parseInt(response[0].stock_quantity) < parseInt(answer.quantity)) {
-                        console.log(" Sorry we don't have enough in the store.")
-                        return customer();
-                    } else {
-                        // for (i = 0; i < parseInt(answer.quantity); i++) {
-                        //     totalPrice += response[0].price;
-                        // }
-                        totalPrice = parseInt(answer.quantity) * parseFloat(response[0].price);
+            // ======= 3.3 Update database (stock_quantity) if 3.1 and 3.2 are true =======
+            else {
+                let newStock = parseFloat(response[0].stock_quantity) - parseFloat(answer.quantity);
 
-                        console.log("       ................. Receipt .................")
-                        console.log("\n\n         " + response[0].product_name + " ............... $ " + response[0].price)
-                        console.log("         Purchased ................. x " + answer.quantity)
-                        console.log("\n         ...Payment approved...\n         ...Total price: $ " + chalk.yellowBright.underline.bold(totalPrice.toFixed(2)))
-                        console.log("         Print Time: " + moment().format() + "\n\n         Thank you for shopping at Bamazon!\n\n")
-                        console.log("       ...........................................\n\n")
+                connection.query("UPDATE products SET ? WHERE ?",
+                    [{ stock_quantity: newStock }, { item_id: answer.id }],
+                    function (err, update) {
+                        if (err) { throw err; };
 
-                        // ============= 3.3 Update database (stock_quantity) =============
-                        let newStock = parseFloat(response[0].stock_quantity) - parseFloat(answer.quantity);
-                        connection.query("UPDATE products SET ? WHERE ?",
-                            [{ stock_quantity: newStock }, { item_id: answer.id }],
-                            function (err, update) {
-                                if (err) { throw err; };
-                                console.log(boxen("✿ Product Quantity   " + chalk.bold.redBright(newStock + " left"), { backgroundColor: "black", borderColor: "magenta", padding: 1, margin: 1, borderStyle: 'classic' }))
-                                return customer();
-                            }
-                        );
+                        // ============= 3.5 Make a customer receipt =============
+                        let totalPrice = parseInt(answer.quantity) * parseFloat(response[0].price);
+                        console.log(
+                            "\n\n       ................. Receipt ................." +
+                            "\n\n         " + response[0].product_name + " ............ $ " + response[0].price +
+                            "\n         Purchased ............ x " + answer.quantity +
+                            "\n\n         ...Payment approved..." +
+                            "\n         ...Total price: $ " + chalk.yellow.underline(totalPrice.toFixed(2)) +
+                            "\n         Print Time: " + moment().format() +
+                            "\n\n         Thank you for shopping at Bamazon!\n\n" +
+                            "       ...........................................\n\n")
 
-                        // ============= 4 Update database (product_sales) =============
+                        // ============= 4 Update database (product_sales) INVISIBLE!! =============
                         let totalSales = response[0].product_sales + totalPrice
-                        connection.query("UPDATE products SET ? WHERE ?",
-                            [{ product_sales: totalSales }, { item_id: answer.id }],
-                            function (err, update) {
-                                if (err) { throw err; };
-                            }
+                        connection.query("UPDATE products SET ? WHERE ?", [{ product_sales: totalSales }, { item_id: answer.id }],
+                            function (err, sales) { if (err) { throw err; }; }
                         );
+
+                        return customer();
                     }
-                }
-            });
+                );
+            }
+        });
     });
 }

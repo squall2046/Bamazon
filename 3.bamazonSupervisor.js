@@ -5,10 +5,6 @@ const chalk = require("chalk");
 const figlet = require('figlet');
 const boxen = require('boxen');
 const Table = require('cli-table3');
-// ============= 3.5a build a departments cli-table with head only =============
-let table = new Table({
-    head: ['department_id', 'department_name', 'over_head_costs', 'product_sales', 'total_profit']
-});
 
 let connection = mysql.createConnection({
     host: process.env.DB_HOST,
@@ -17,8 +13,6 @@ let connection = mysql.createConnection({
     password: process.env.DB_PASS,
     database: "bamazondb"
 });
-
-let singleSale = 0;
 
 // ============= 1.Welcome =============
 figlet('Bamazon', function (err, data) {
@@ -41,36 +35,34 @@ function supervisor() {
         name: "customer",
         type: "list",
         message: "How may I serve you?",
-        choices: ["View Product Sales by Department", "Create New Department", "Exit"]
+        choices: ["[View Product Sales by Department]", "[Create New Department]", "[Exit]"]
     })
         .then(function (answer) {
             switch (answer.customer) {
-                case "View Product Sales by Department":
+                case "[View Product Sales by Department]":
                     viewDept();
                     break;
-                case "Create New Department":
+                case "[Create New Department]":
                     addDept();
                     break;
-                case "Exit":
-                    process.exit();
+                case "[Exit]":
                     connection.end();
+                    process.exit();
                     break;
             }
         });
 }
 
-// ============= 3 Read and Update data of departments table [over_head_costs, product_sales, total_profit] =============
+// ============= 3 Read and Update data of departments table [over_head_costs, product_sales] =============
 function viewDept() {
-
     // ============= 3.1 View every 'product_sales' of products table first!! Then sum values by department name!! =============
     connection.query("SELECT department_name, SUM (product_sales) as product_sales FROM products GROUP BY department_name",
         function (err, prod) {
-            if (err) { throw err; };
+            if (err) { throw err };
             // console.log(prod);
-            for (var j = 0; j < prod.length; j++) {
-                // console.log(prod[j].department_name + " product_sales: " + prod[j].product_sales + "\n");
 
-                // ============= 3.2 Update every 'product_sales' of departments table =============
+            // ============= 3.2 Update every 'product_sales' of departments table =============
+            for (let j = 0; j < prod.length; j++) {
                 connection.query("UPDATE departments SET ? WHERE ?",
                     [{ product_sales: prod[j].product_sales }, { department_name: prod[j].department_name }],
                     function (err, saleUpdate) {
@@ -78,50 +70,38 @@ function viewDept() {
                         // console.log("departments table product_sales updated!");
                     }
                 )
-            }
-            return viewDeptUp();
+            };
+            viewDeptUp();
         }
     )
 }
 
-// ============= 3.3 View and log 'product_sales' updates of department table =============
+// ============= 4 Read and Update data of departments table [total_profit (Won't be stored in MySql)] =============
 function viewDeptUp() {
-
-    // ============= 3.5b reset table before push data(again) =============
-    table = new Table({
+    // ============= 4.1 build a departments cli-table with head only =============
+    let table = new Table({
         head: ['department_id', 'department_name', 'over_head_costs', 'product_sales', 'total_profit']
     });
 
+    // ============= 4.2 Read departments table and Generate a temporary total_profit column (Won't be stored in MySql)
     connection.query("SELECT department_id, department_name, over_head_costs, product_sales, SUM (product_sales - over_head_costs) as total_profit FROM departments GROUP BY department_name",
         function (err, dept) {
             if (err) { throw err; };
             // console.log(dept);
 
-            for (var i = 0; i < dept.length; i++) {
+            // ============= 4.3 loop departments data and push to the cli-table =============
+            for (let i = 0; i < dept.length; i++) {
                 let deptArr = [chalk.yellow(dept[i].department_id), dept[i].department_name, chalk.cyanBright(dept[i].over_head_costs), chalk.magentaBright(dept[i].product_sales), chalk.redBright(dept[i].total_profit)];
-                // console.log(deptArr);
-
-                // ============= 3.4 Update every 'total_profit' of departments table =============
-                connection.query("UPDATE departments SET ? WHERE ?",
-                    [{ total_profit: dept[i].total_profit }, { department_name: dept[i].department_name }],
-                    function (err, profitUpdate) {
-                        if (err) { throw err; };
-                        // console.log("departments table total_profit updated!");
-                    })
-
-                // ============= 3.5b loop and push departments data to the cli-table which built in the beginning =============
-                // console.log(table)
                 table.push(deptArr);
+                // console.log(deptArr);
             }
-            // ============= 3.5c log the departments cli-table outside of loop =============
             console.log(chalk.red("\n\n\n\n                                  departments table\n") + table.toString() + "\n\n\n\n");
-            supervisor();
+            return supervisor();
         }
     )
 }
 
-
-// ============= 4. Create data in the department table [department_id, department_name, over_head_costs] =============
+// ============= 5. Create data in the department table [department_id, department_name, over_head_costs] =============
 function addDept() {
     inquirer.prompt([{
         name: "deptID",
@@ -137,16 +117,20 @@ function addDept() {
         message: "Please enter the Over Head Costs",
     }])
         .then(function (answer) {
-            connection.query("INSERT INTO departments SET ?",
-                {
-                    department_id: answer.deptID,
-                    department_name: answer.deptName,
-                    over_head_costs: answer.deptCosts
-                },
-                function (err, res) {
-                    if (err) { throw error; };
-                    console.log(chalk.green("\n\nNew Department has added.\n\n\n\n"))
-                    viewDept()
-                })
+            if (answer.deptID.length > 0 && answer.deptName.length > 0 && answer.deptCosts.length > 0) {
+                connection.query("INSERT INTO departments SET ?",
+                    {
+                        department_id: answer.deptID,
+                        department_name: answer.deptName,
+                        over_head_costs: answer.deptCosts
+                    }, function (err, res) {
+                        if (err) { throw error };
+                        console.log(chalk.green("\n\n       ➯ New Department has added.\n\n"));
+                        return viewDept();
+                    })
+            } else {
+                console.log(chalk.redBright("\n\n\n\n       ➯ Invalid information, please try again.\n\n\n\n"));
+                return addDept();
+            }
         })
 }
